@@ -1,0 +1,174 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  SUPPORT
+  MANAGER
+  ACCOUNTANT
+}
+
+enum GenericType {
+  ALLOPATHIC
+  HERBAL
+}
+
+enum ProductType {
+  MEDICINE
+  NONMEDICINE
+}
+
+enum AddressLabel {
+  HOME
+  WORK
+  OTHER
+}
+
+model PanelUser {
+  id       String @id @default(uuid())
+  name     String
+  email    String @unique
+  phone    String @unique
+  password String
+  role     Role  
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model SiteUser {
+  id          String    @id @default(uuid())
+  name        String
+  email       String?   @unique
+  phone       String    @unique
+  password    String
+  dateOfBirth DateTime?
+  Address     Address[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Address {
+  id        String       @id @default(uuid())
+  label     AddressLabel @unique @default(HOME)
+  address   String
+  isDefault Boolean      @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId String
+  user   SiteUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Generic {
+  id                   String      @id @default(uuid())
+  name                 String
+  genericType          GenericType @default(ALLOPATHIC)
+  indications          String?     @db.VarChar(255)
+  pharmacology         String?     @db.VarChar(255)
+  dosageAdministration String?     @db.VarChar(255)
+  interaction          String?     @db.VarChar(255)
+  sideeffects          String?     @db.VarChar(255)
+  pregnancyLactation   String?     @db.VarChar(255)
+  precautions          String?     @db.VarChar(255)
+  overdose             String?     @db.VarChar(255)
+  storageConditions    String?     @db.VarChar(255)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  Medicine Medicine[]
+}
+
+model Company {
+  id          String  @id @default(uuid())
+  name        String
+  description String?
+  image       String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  Medicine  Medicine?
+}
+
+model Category {
+  id   String @id @default(uuid())
+  name String
+
+  parentId String?
+  parent   Category?  @relation("CategoryToCategory", fields: [parentId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  children Category[] @relation("CategoryToCategory")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  Product Product[]
+}
+
+model Product {
+  id                      String      @id @default(uuid())
+  name                    String
+  image                   String?
+  type                    ProductType @default(MEDICINE)
+  unitType                String
+  mrp                     Float
+  b2bDiscount             Float
+  b2bSellingPrice         Float
+  b2cDiscount             Float
+  b2cSellingPrice         Float
+  isPrescriptionMandatory Boolean     @default(false)
+  disclaimer              String
+  qtyInStock              Int
+  viewCount               Int         @default(0)
+
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  Medicine    Medicine?
+  NonMedicine NonMedicine?
+}
+
+model Medicine {
+  id                   String  @id @default(uuid())
+  dosageForm           String // Might be enums?? (Capsule,Tablet,Suspension)
+  dosageStrength       String
+  indications          String? @db.VarChar(255)
+  pharmacology         String? @db.VarChar(255)
+  dosageAdministration String? @db.VarChar(255)
+  interaction          String? @db.VarChar(255)
+  sideeffects          String? @db.VarChar(255)
+  pregnancyLactation   String? @db.VarChar(255)
+  precautions          String? @db.VarChar(255)
+  overdose             String? @db.VarChar(255)
+  storageConditions    String? @db.VarChar(255)
+
+  genericId String
+  generic   Generic @relation(fields: [genericId], references: [id], onDelete: Cascade)
+  compantId String  @unique
+  company   Company @relation(fields: [compantId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [id], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model NonMedicine {
+  id          String  @id @default(uuid())
+  description String?
+
+  product Product @relation(fields: [id], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
