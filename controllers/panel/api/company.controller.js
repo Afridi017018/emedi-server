@@ -36,12 +36,18 @@ const addCompany = async (req, res) => {
 };
 
 const getCompanies = async (req, res) => {
-  const { page, search } = req.query;
+  const { page = -1, search } = req.query;
 
-  const options = {
-    take: PER_PAGE,
-    skip: page ? (+page - 1) * PER_PAGE : 0,
-  };
+
+  let options = {};
+  if (Number(page) >= 0) {
+    options = {
+      take: PER_PAGE,
+      skip: page ? (+page - 1) * PER_PAGE : 0,
+    };
+
+  }
+
   const countOptions = {};
 
   if (search) {

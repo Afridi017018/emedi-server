@@ -98,16 +98,18 @@ const addProduct = async (req, res) => {
 };
 
 const getProducts = async (req, res) => {
-  const { page, search } = req.query;
+  const { page = -1, search } = req.query;
 
-  const options = {
-    take: PER_PAGE,
-    skip: page ? (+page - 1) * PER_PAGE : 0,
-    include: {
-      Medicine: true,
-      NonMedicine: true,
-    },
-  };
+
+  let options = {};
+  if (Number(page) >= 0) {
+    options = {
+      take: PER_PAGE,
+      skip: page ? (+page - 1) * PER_PAGE : 0,
+    };
+
+  }
+
   const countOptions = {};
 
   if (search) {
@@ -155,4 +157,61 @@ const getProduct = async (req, res) => {
   }
 };
 
-module.exports = { addProduct, getProducts, getProduct };
+
+
+
+const updateProduct = async (req, res) => {
+  const { productId } = req.params;
+  const files = req.files;
+  const { 
+    name, 
+    mrp, 
+    b2bSellingPrice,
+    b2bDiscount,
+    b2cSellingPrice,
+    b2cDiscount,
+    unitType,
+    qtyInStock,
+    disclaimer } = req.body;
+  let filenames;
+  const productData = {
+    name,
+    unitType,
+    mrp: parseFloat(mrp),
+    b2bDiscount: parseFloat(b2bDiscount),
+    b2bSellingPrice: parseFloat(b2bSellingPrice),
+    b2cDiscount: parseFloat(b2cDiscount),
+    b2cSellingPrice: parseFloat(b2cSellingPrice),
+    disclaimer,
+    qtyInStock: Number(qtyInStock),
+  };
+
+
+  try {
+    if (files) {
+      filenames = uploadFiles(files);
+    }
+    if (filenames) {
+      productData.image = filenames.image;
+    }
+    const product = await db.product.update({
+      where: {
+        id: productId,
+      },
+      data: productData,
+    });
+
+    res
+      .status(200)
+      .json({ success: true, message: `Product updated successfully` });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+};
+
+
+
+
+
+module.exports = { addProduct, getProducts, getProduct, updateProduct };

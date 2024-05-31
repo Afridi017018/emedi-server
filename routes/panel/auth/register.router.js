@@ -12,4 +12,5 @@ router
   .route("/register")
   .post(checkSchema(panelRegisterValidationSchema), registerPanelUser);
 
+  
 module.exports = router;
